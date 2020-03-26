@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.MainActivity">
+
+
+    <include
+        android:id="@+id/bar_view"
+        layout="@layout/layout_bar"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.scwang.smartrefresh.layout.SmartRefreshLayout
+        android:id="@+id/refreshlayout"
+        app:layout_constraintTop_toBottomOf="@+id/bar_view"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp">
+
+        <RelativeLayout
+            android:id="@+id/rl_header_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            >
+            <ProgressBar
+                android:id="@+id/progress_loading_dialog"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@null"
+                android:indeterminateDrawable="@drawable/loading_anim"
+                android:indeterminateBehavior="repeat"
+                android:layout_centerInParent="true"
+                />
+        </RelativeLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_img"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:overScrollMode="never"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/bar_view" />
+
+        <RelativeLayout
+            android:id="@+id/rl_footer_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="60dp">
+
+            <ProgressBar
+                android:id="@+id/progress_loading_dialog2"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_centerInParent="true"
+                android:background="@null"
+                android:indeterminateBehavior="repeat"
+                android:indeterminateDrawable="@drawable/loading_anim" />
+        </RelativeLayout>
+
+    </com.scwang.smartrefresh.layout.SmartRefreshLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
