@@ -55,6 +55,16 @@ public class Hit implements Serializable {
     private String user;
     private String userImageURL;
 
+    private float scale;
+
+    public float getScale() {
+        return scale;
+    }
+
+    public void setScale(float scale) {
+        this.scale = scale;
+    }
+
     public int getId() {
         return id;
     }

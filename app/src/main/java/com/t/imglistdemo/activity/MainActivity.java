@@ -2,15 +2,16 @@ package com.t.imglistdemo.activity;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestManager;
 import com.scwang.smartrefresh.layout.SmartRefreshLayout;
 import com.scwang.smartrefresh.layout.api.RefreshLayout;
 import com.scwang.smartrefresh.layout.listener.OnLoadMoreListener;
@@ -23,17 +24,18 @@ import com.t.imglistdemo.entity.ImageEntity;
 import com.t.imglistdemo.net.HttpUrl;
 import com.t.imglistdemo.net.IResponseListener;
 import com.t.imglistdemo.net.NetModel;
-import com.t.imglistdemo.util.StaggeredDividerItemDecoration;
+import com.t.imglistdemo.view.CustomRecyclerView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    private RecyclerView rv;
+    private CustomRecyclerView rv;
 
+    private View emptyView;
 
     private ImageRvAdapter adapter;
 
@@ -41,11 +43,12 @@ public class MainActivity extends AppCompatActivity {
 
     private int pageCount = 1;
 
-    private boolean isRefreshing = false;
-
-    private boolean isLoadMore = false;
-
     private SmartRefreshLayout refreshlayout;
+
+    private RequestManager requestManager;
+
+    private ArrayList<Hit> adapterList;
+    private boolean isScrolling;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,30 +59,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initData() {
-        getImgList(pageCount,true);
+        getImgList(pageCount, true);
     }
 
     private void initView() {
-        rv = findViewById(R.id.rv_img);
+        requestManager = Glide.with(this);
+        adapterList = new ArrayList<>();
+        adapter = new ImageRvAdapter(this, adapterList);
+        adapter.setImageRvListener(new ImageRvAdapter.ImageRvListener() {
+            @Override
+            public void onRvItemClick(Hit item) {
+                turn2Web(item);
+            }
+        });
+
+        emptyView = findViewById(R.id.empty);
         refreshlayout = findViewById(R.id.refreshlayout);
+        rv = findViewById(R.id.rv_img);
+        rv.setEmptyView(emptyView);
+
         staggeredGridLayoutManager = new StaggeredGridLayoutManager(3, RecyclerView.VERTICAL);
         rv.setLayoutManager(staggeredGridLayoutManager);
-        rv.addItemDecoration(new StaggeredDividerItemDecoration(this, 10, 3));
+        rv.setAdapter(adapter);
+
         rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                int[] first = new int[3];
-                staggeredGridLayoutManager.findFirstCompletelyVisibleItemPositions(first);
-                if (newState == RecyclerView.SCROLL_STATE_IDLE && (first[0] == 1 || first[1] == 1)) {
-                    staggeredGridLayoutManager.invalidateSpanAssignments();
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING
+                        || newState == RecyclerView.SCROLL_STATE_SETTLING) {
+                    isScrolling = true;
+                    requestManager.pauseRequests();
+                } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    if (isScrolling == true) {
+                        requestManager.resumeRequests();
+                    }
+                    isScrolling = false;
                 }
             }
 
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-
             }
         });
 
@@ -99,19 +120,10 @@ public class MainActivity extends AppCompatActivity {
                 refreshLayout.finishLoadMore();
             }
         });
+
     }
 
     private void setImgData(ImageEntity imageEntity, boolean isRefresh) {
-        if (adapter == null) {
-            adapter = new ImageRvAdapter(this, imageEntity.getHits());
-            adapter.setImageRvListener(new ImageRvAdapter.ImageRvListener() {
-                @Override
-                public void onRvItemClick(Hit item) {
-                    turn2Web(item);
-                }
-            });
-            rv.setAdapter(adapter);
-        }
         if (isRefresh) {
             refreshlayout.finishRefresh();
             adapter.setData(imageEntity.getHits());
@@ -136,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
         NetModel.getInstance().getImageList(HttpUrl.BASE_URL, params, new IResponseListener<ImageEntity>() {
             @Override
             public void onSuccess(ImageEntity imageEntity) {
-                setImgData(imageEntity,isRefresh);
+                setImgData(imageEntity, isRefresh);
             }
 
             @Override

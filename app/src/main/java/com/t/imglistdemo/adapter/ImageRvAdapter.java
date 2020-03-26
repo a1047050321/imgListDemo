@@ -1,34 +1,47 @@
 package com.t.imglistdemo.adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DecodeFormat;
+import com.bumptech.glide.load.Options;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.t.imglistdemo.R;
-import com.t.imglistdemo.activity.MainActivity;
 import com.t.imglistdemo.entity.Hit;
-import com.t.imglistdemo.entity.ImageEntity;
-import com.t.imglistdemo.util.ImageLoader;
+import com.t.imglistdemo.util.ScreenUtil;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 public class ImageRvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements View.OnClickListener {
     private Context ctx;
     private ArrayList<Hit> res;
     private ImageRvListener listener;
+    private RequestOptions options;
+    private int itemWidth;
 
+    @SuppressLint("CheckResult")
     public ImageRvAdapter(Context ctx, ArrayList<Hit> res) {
         this.ctx = ctx;
         this.res = res;
+        options = new RequestOptions();
+        options.skipMemoryCache(true)
+                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                .centerCrop()
+                .placeholder(R.drawable.replace)
+                .error(R.drawable.replace);
+        itemWidth = ScreenUtil.getInstance(ctx.getApplicationContext()).getScreenWidth() / 3;
     }
 
     @NonNull
@@ -46,14 +59,21 @@ public class ImageRvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     private void bindImgHoler(ImgListHolder holder, final Hit hit, int position) {
+        String targetUrl = hit.getWebformatURL();
+        if (null == holder || null == targetUrl || targetUrl.equals("")) {
+            return;
+        }
+
+        float radio = ((float) hit.getImageHeight()) / hit.getImageWidth();
+        ViewGroup.LayoutParams params = holder.getIv().getLayoutParams();
+        params.width = itemWidth;
+        params.height = (int) (itemWidth * radio);
+
         Glide.with(ctx)
-                .load(hit.getLargeImageURL())
-                .crossFade()
-                .fitCenter()
-                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                .placeholder(R.drawable.replace)
-                .error(R.drawable.replace)
+                .load(targetUrl)
+                .apply(options)
                 .into(holder.getIv());
+
         holder.getTv().setText(String.valueOf(hit.getFavorites()));
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -63,6 +83,13 @@ public class ImageRvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 }
             }
         });
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        ImgListHolder imgListHolder = (ImgListHolder) holder;
+        Glide.with(ctx).clear(imgListHolder.getIv());
+        super.onViewRecycled(holder);
     }
 
     @Override

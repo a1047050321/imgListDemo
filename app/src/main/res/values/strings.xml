@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ImgListDemo</string>
+    <string name="tip_empty">没有数据</string>
 </resources>

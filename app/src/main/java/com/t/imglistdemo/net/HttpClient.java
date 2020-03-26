@@ -1,8 +1,6 @@
 package com.t.imglistdemo.net;
 
 
-import com.t.imglistdemo.common.Constant;
-
 public class HttpClient {
     private static HttpService httpService;
 
